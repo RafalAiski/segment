@@ -10,7 +10,7 @@
     <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- D3.js for wordcloud -->
+    <!-- D3.js for wordcloud and network visualizations -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <!-- D3 Wordcloud -->
     <script src="https://cdn.jsdelivr.net/gh/jasondavies/d3-cloud@1.2.5/build/d3.layout.cloud.js"></script>
@@ -21,6 +21,10 @@
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <!-- ForceGraph for network visualization -->
+    <script src="https://unpkg.com/force-graph"></script>
+    <!-- jLouvain for community detection in networks -->
+    <script src="https://unpkg.com/jlouvain@2.0.0/build/jlouvain.min.js"></script>
     <style>
         body {
             padding-top: 2rem;
@@ -171,6 +175,12 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab" aria-controls="insights" aria-selected="false">Insights</button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">Advanced Analysis</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="network-tab" data-bs-toggle="tab" data-bs-target="#network" type="button" role="tab" aria-controls="network" aria-selected="false">Network Analysis</button>
+                </li>
             </ul>
             
             <div class="tab-content" id="dashboardTabsContent">
@@ -296,6 +306,126 @@
                                         </select>
                                         <div id="verticalTermsList"></div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Analysis Tab -->
+                <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Vertical Detail Length by Category</h5>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="detailLengthChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Vertical Comparison</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select verticals to compare:</label>
+                                        <div class="d-flex">
+                                            <select class="form-select me-2" id="compareVertical1">
+                                                <!-- Options will be inserted here -->
+                                            </select>
+                                            <select class="form-select" id="compareVertical2">
+                                                <!-- Options will be inserted here -->
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary mt-2" id="compareVerticalsBtn">Compare</button>
+                                    </div>
+                                    <div id="comparisonResult" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Term Distribution Across Verticals</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Search for a term:</label>
+                                        <div class="d-flex">
+                                            <input type="text" class="form-control me-2" id="termSearch" placeholder="Enter term (e.g., 'therapy', 'platform')">
+                                            <button class="btn btn-primary" id="searchTermBtn">Search</button>
+                                        </div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="termDistributionChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Vertical Detail Sentiment Analysis</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        This chart shows an estimated sentiment score calculated based on the presence of positive and negative words in vertical details.
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="sentimentChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Network Analysis Tab -->
+                <div class="tab-pane fade" id="network" role="tabpanel" aria-labelledby="network-tab">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Term Co-occurrence Network</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        This visualization shows how frequently terms appear together in company descriptions. Larger nodes represent more common terms, and thicker edges indicate stronger relationships.
+                                    </div>
+                                    <div id="networkGraph" style="height: 600px; background-color: #f8f9fa;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Vertical Similarity Map</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        This visualization shows how similar different verticals are based on the common terms used in their descriptions.
+                                    </div>
+                                    <div id="verticalClusterMap" style="height: 400px; background-color: #f8f9fa;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Term Clusters</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="termClusters"></div>
                                 </div>
                             </div>
                         </div>
@@ -571,48 +701,94 @@
             const allTerms = [];
             const biotechTerms = [];
             const nonBiotechTerms = [];
-            const stopWords = new Set(['and', 'the', 'for', 'in', 'on', 'with', 'to', 'of', 'a', 'an']);
             
+            // Extended stop words list
+            const stopWords = new Set([
+                'and', 'the', 'for', 'in', 'on', 'with', 'to', 'of', 'a', 'an', 'is', 'are', 'as', 'that', 'this',
+                'be', 'by', 'or', 'it', 'its', 'at', 'from', 'has', 'have', 'had', 'was', 'were', 'will', 'would',
+                'can', 'could', 'should', 'not', 'but', 'which', 'their', 'they', 'them', 'these', 'those', 'than',
+                'then', 'there', 'when', 'where', 'who', 'how', 'what', 'why', 'all', 'any', 'both', 'each', 'more'
+            ]);
+            
+            // Custom weights based on importance in biotech context
+            const importantTerms = {
+                'cancer': 5, 'therapeutic': 5, 'therapy': 5, 'drug': 5, 'antibody': 5, 'genomic': 5, 
+                'diagnostic': 5, 'platform': 4, 'cell': 4, 'disease': 4, 'clinical': 4, 'biomarker': 4,
+                'rare': 4, 'gene': 4, 'protein': 4, 'molecular': 3, 'monoclonal': 3, 'development': 3,
+                'small': 3, 'large': 3, 'novel': 3, 'innovative': 3, 'advanced': 3, 'ai': 3, 'precision': 3,
+                'medical': 3, 'research': 3, 'discovery': 3, 'technology': 3, 'device': 3
+            };
+            
+            // Process vertical details
             filteredData.forEach(company => {
                 if (company.vertical_detail) {
+                    // Clean text and extract words
                     const words = company.vertical_detail.toLowerCase()
-                        .replace(/[^\w\s]/g, '')
+                        .replace(/[^\w\s-]/g, ' ')  // Keep hyphens for terms like "cell-based"
                         .split(/\s+/)
                         .filter(word => word.length > 2 && !stopWords.has(word));
                     
-                    words.forEach(word => {
+                    // Get phrase combinations (bigrams)
+                    const bigrams = [];
+                    for (let i = 0; i < words.length - 1; i++) {
+                        const bigram = words[i] + ' ' + words[i+1];
+                        if (bigram.length > 5) { // Only meaningful bigrams
+                            bigrams.push(bigram);
+                        }
+                    }
+                    
+                    // Process words and bigrams
+                    const allTokens = [...words, ...bigrams];
+                    
+                    allTokens.forEach(token => {
+                        // Base size for tokens
+                        let baseSize = 10;
+                        
+                        // Apply importance weighting
+                        for (const [term, weight] of Object.entries(importantTerms)) {
+                            if (token.includes(term)) {
+                                baseSize += weight * 2;
+                                break;
+                            }
+                        }
+                        
                         // Add to all terms
-                        const existingAll = allTerms.find(t => t.text === word);
+                        const existingAll = allTerms.find(t => t.text === token);
                         if (existingAll) {
-                            existingAll.size += 5;
+                            existingAll.size += baseSize;
                         } else {
-                            allTerms.push({ text: word, size: 10 });
+                            allTerms.push({ text: token, size: baseSize });
                         }
                         
                         // Add to category-specific terms
                         if (biotechVerticals.includes(company.vertical)) {
-                            const existingBio = biotechTerms.find(t => t.text === word);
+                            const existingBio = biotechTerms.find(t => t.text === token);
                             if (existingBio) {
-                                existingBio.size += 5;
+                                existingBio.size += baseSize;
                             } else {
-                                biotechTerms.push({ text: word, size: 10 });
+                                biotechTerms.push({ text: token, size: baseSize });
                             }
                         } else if (nonBiotechVerticals.includes(company.vertical) || academicVerticals.includes(company.vertical)) {
-                            const existingNonBio = nonBiotechTerms.find(t => t.text === word);
+                            const existingNonBio = nonBiotechTerms.find(t => t.text === token);
                             if (existingNonBio) {
-                                existingNonBio.size += 5;
+                                existingNonBio.size += baseSize;
                             } else {
-                                nonBiotechTerms.push({ text: word, size: 10 });
+                                nonBiotechTerms.push({ text: token, size: baseSize });
                             }
                         }
                     });
                 }
             });
             
+            // Sort terms by size
+            const sortAllTerms = allTerms.sort((a, b) => b.size - a.size);
+            const sortBiotechTerms = biotechTerms.sort((a, b) => b.size - a.size);
+            const sortNonBiotechTerms = nonBiotechTerms.sort((a, b) => b.size - a.size);
+            
             // Create word clouds
-            createWordCloud('detailsWordcloud', allTerms.slice(0, 100));
-            createWordCloud('biotechWordcloud', biotechTerms.slice(0, 100));
-            createWordCloud('nonBiotechWordcloud', nonBiotechTerms.slice(0, 100));
+            createWordCloud('detailsWordcloud', sortAllTerms.slice(0, 150)); // Show more terms
+            createWordCloud('biotechWordcloud', sortBiotechTerms.slice(0, 100));
+            createWordCloud('nonBiotechWordcloud', sortNonBiotechTerms.slice(0, 100));
         }
 
         // Helper function to create a word cloud
@@ -624,32 +800,75 @@
             const width = element.offsetWidth;
             const height = element.offsetHeight;
             
+            // If no words or element not found, show error message
+            if (!words || words.length === 0 || !element) {
+                d3.select(`#${elementId}`)
+                    .append("div")
+                    .attr("class", "alert alert-warning")
+                    .text("No data available for word cloud. Try adjusting your filters or upload a file with more detailed descriptions.");
+                return;
+            }
+            
+            // Color scale for word cloud
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            // Create the word cloud layout
             const layout = d3.layout.cloud()
                 .size([width, height])
                 .words(words)
                 .padding(5)
-                .rotate(() => ~~(Math.random() * 2) * 90)
-                .fontSize(d => d.size)
+                .rotate(() => (Math.random() < 0.5 ? 0 : 90))
+                .fontSize(d => Math.sqrt(d.size) * 3 + 10) // Improved sizing formula
+                .spiral("archimedean")
                 .on("end", draw);
                 
             layout.start();
             
             function draw(words) {
-                d3.select(`#${elementId}`)
+                const svg = d3.select(`#${elementId}`)
                     .append("svg")
                     .attr("width", width)
-                    .attr("height", height)
-                    .append("g")
+                    .attr("height", height);
+                
+                const wordCloud = svg.append("g")
                     .attr("transform", `translate(${width / 2},${height / 2})`)
                     .selectAll("text")
                     .data(words)
                     .enter()
                     .append("text")
                     .style("font-size", d => `${d.size}px`)
-                    .style("fill", () => d3.schemeCategory10[Math.floor(Math.random() * 10)])
+                    .style("font-family", "Arial, sans-serif")
+                    .style("font-weight", d => d.size > 20 ? "bold" : "normal")
+                    .style("fill", (d, i) => colorScale(i % 10))
                     .attr("text-anchor", "middle")
                     .attr("transform", d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
-                    .text(d => d.text);
+                    .text(d => d.text)
+                    .on("mouseover", function() {
+                        d3.select(this).transition()
+                            .duration(300)
+                            .style("font-size", d => `${d.size * 1.2}px`)
+                            .style("cursor", "pointer")
+                            .style("fill", "#ff7700");
+                    })
+                    .on("mouseout", function(d, i) {
+                        d3.select(this).transition()
+                            .duration(300)
+                            .style("font-size", d => `${d.size}px`)
+                            .style("fill", colorScale(i % 10));
+                    })
+                    .on("click", function(event, d) {
+                        // Use the term to filter the data
+                        document.getElementById('detailSearch').value = d.text;
+                        document.getElementById('applyFiltersBtn').click();
+                    });
+                
+                // Add tooltip that explains how to use the word cloud
+                svg.append("text")
+                    .attr("x", 10)
+                    .attr("y", 20)
+                    .attr("class", "text-muted")
+                    .style("font-size", "12px")
+                    .text("Click on any word to filter by that term");
             }
         }
 
@@ -930,6 +1149,744 @@
             }, 500);
         }
 
+        // Initialize advanced analysis visualizations
+        function initAdvancedAnalysis() {
+            // Vertical detail length by category chart
+            const lengthByCategory = {
+                'Biotech/Life Sciences': [],
+                'Academic': [],
+                'Non-Biotech': []
+            };
+            
+            filteredData.forEach(company => {
+                const detail = company.vertical_detail || '';
+                if (biotechVerticals.includes(company.vertical)) {
+                    lengthByCategory['Biotech/Life Sciences'].push(detail.length);
+                } else if (academicVerticals.includes(company.vertical)) {
+                    lengthByCategory['Academic'].push(detail.length);
+                } else if (nonBiotechVerticals.includes(company.vertical)) {
+                    lengthByCategory['Non-Biotech'].push(detail.length);
+                }
+            });
+            
+            // Calculate average lengths
+            const avgLengths = {};
+            for (const [category, lengths] of Object.entries(lengthByCategory)) {
+                avgLengths[category] = lengths.length ? lengths.reduce((sum, length) => sum + length, 0) / lengths.length : 0;
+            }
+            
+            // Create chart
+            const lengthCtx = document.getElementById('detailLengthChart').getContext('2d');
+            if (window.detailLengthChart) {
+                window.detailLengthChart.destroy();
+            }
+            
+            window.detailLengthChart = new Chart(lengthCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(avgLengths),
+                    datasets: [{
+                        label: 'Average Detail Length (characters)',
+                        data: Object.values(avgLengths),
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Average Length (characters)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Populate vertical comparison dropdowns
+            const uniqueVerticals = [...new Set(filteredData.map(c => c.vertical))].filter(v => v);
+            const dropdown1 = document.getElementById('compareVertical1');
+            const dropdown2 = document.getElementById('compareVertical2');
+            
+            dropdown1.innerHTML = '';
+            dropdown2.innerHTML = '';
+            
+            uniqueVerticals.forEach(vertical => {
+                dropdown1.appendChild(new Option(vertical, vertical));
+                dropdown2.appendChild(new Option(vertical, vertical));
+            });
+            
+            // Set second dropdown to second option if available
+            if (uniqueVerticals.length > 1) {
+                dropdown2.selectedIndex = 1;
+            }
+            
+            // Add event listener for comparison button
+            document.getElementById('compareVerticalsBtn').addEventListener('click', function() {
+                compareVerticals(dropdown1.value, dropdown2.value);
+            });
+            
+            // Add event listener for term search button
+            document.getElementById('searchTermBtn').addEventListener('click', function() {
+                const term = document.getElementById('termSearch').value.trim().toLowerCase();
+                if (term) {
+                    showTermDistribution(term);
+                }
+            });
+            
+            // Initialize sentiment analysis chart
+            initSentimentAnalysis();
+        }
+        
+        // Compare two verticals
+        function compareVerticals(vertical1, vertical2) {
+            if (vertical1 === vertical2) {
+                document.getElementById('comparisonResult').innerHTML = '<div class="alert alert-warning">Please select two different verticals to compare.</div>';
+                return;
+            }
+            
+            const companies1 = filteredData.filter(c => c.vertical === vertical1);
+            const companies2 = filteredData.filter(c => c.vertical === vertical2);
+            
+            if (companies1.length === 0 || companies2.length === 0) {
+                document.getElementById('comparisonResult').innerHTML = '<div class="alert alert-warning">Not enough data for one or both verticals.</div>';
+                return;
+            }
+            
+            // Extract terms from each vertical
+            const terms1 = {};
+            const terms2 = {};
+            const stopWords = new Set(['and', 'the', 'for', 'in', 'on', 'with', 'to', 'of', 'a', 'an', 'is', 'are']);
+            
+            companies1.forEach(company => {
+                if (company.vertical_detail) {
+                    const words = company.vertical_detail.toLowerCase()
+                        .replace(/[^\w\s]/g, '')
+                        .split(/\s+/)
+                        .filter(word => word.length > 2 && !stopWords.has(word));
+                    
+                    words.forEach(word => {
+                        terms1[word] = (terms1[word] || 0) + 1;
+                    });
+                }
+            });
+            
+            companies2.forEach(company => {
+                if (company.vertical_detail) {
+                    const words = company.vertical_detail.toLowerCase()
+                        .replace(/[^\w\s]/g, '')
+                        .split(/\s+/)
+                        .filter(word => word.length > 2 && !stopWords.has(word));
+                    
+                    words.forEach(word => {
+                        terms2[word] = (terms2[word] || 0) + 1;
+                    });
+                }
+            });
+            
+            // Find common and unique terms
+            const commonTerms = [];
+            const uniqueToFirst = [];
+            const uniqueToSecond = [];
+            
+            for (const [term, count] of Object.entries(terms1)) {
+                if (terms2[term]) {
+                    commonTerms.push({ term, count1: count, count2: terms2[term] });
+                } else {
+                    uniqueToFirst.push({ term, count });
+                }
+            }
+            
+            for (const [term, count] of Object.entries(terms2)) {
+                if (!terms1[term]) {
+                    uniqueToSecond.push({ term, count });
+                }
+            }
+            
+            // Sort terms by frequency
+            commonTerms.sort((a, b) => (b.count1 + b.count2) - (a.count1 + a.count2));
+            uniqueToFirst.sort((a, b) => b.count - a.count);
+            uniqueToSecond.sort((a, b) => b.count - a.count);
+            
+            // Create comparison display
+            let html = `
+                <div class="mb-4">
+                    <h5>Comparison: ${vertical1} vs ${vertical2}</h5>
+                    <p><strong>${companies1.length}</strong> companies in ${vertical1}, <strong>${companies2.length}</strong> companies in ${vertical2}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Common Terms:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Term</th>
+                                    <th>${vertical1} Count</th>
+                                    <th>${vertical2} Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            commonTerms.slice(0, 10).forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.term}</td>
+                        <td>${item.count1}</td>
+                        <td>${item.count2}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Unique to ${vertical1}:</h6>
+                        <ul class="list-group">
+            `;
+            
+            uniqueToFirst.slice(0, 10).forEach(item => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.term} <span class="badge bg-primary rounded-pill">${item.count}</span>
+                </li>`;
+            });
+            
+            html += `
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Unique to ${vertical2}:</h6>
+                        <ul class="list-group">
+            `;
+            
+            uniqueToSecond.slice(0, 10).forEach(item => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.term} <span class="badge bg-primary rounded-pill">${item.count}</span>
+                </li>`;
+            });
+            
+            html += `
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('comparisonResult').innerHTML = html;
+        }
+        
+        // Show term distribution across verticals
+        function showTermDistribution(searchTerm) {
+            const verticalCounts = {};
+            const allVerticals = [...biotechVerticals, ...academicVerticals, ...nonBiotechVerticals];
+            
+            // Initialize counts
+            allVerticals.forEach(v => {
+                verticalCounts[v] = 0;
+            });
+            
+            // Count occurrences by vertical
+            filteredData.forEach(company => {
+                if (company.vertical_detail && company.vertical_detail.toLowerCase().includes(searchTerm)) {
+                    verticalCounts[company.vertical] = (verticalCounts[company.vertical] || 0) + 1;
+                }
+            });
+            
+            // Sort by count
+            const sortedVerticals = Object.entries(verticalCounts)
+                .filter(([_, count]) => count > 0)
+                .sort((a, b) => b[1] - a[1]);
+            
+            // Create/update chart
+            const ctx = document.getElementById('termDistributionChart').getContext('2d');
+            
+            if (window.termDistributionChart) {
+                window.termDistributionChart.destroy();
+            }
+            
+            window.termDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedVerticals.map(v => v[0]),
+                    datasets: [{
+                        label: `Companies mentioning "${searchTerm}"`,
+                        data: sortedVerticals.map(v => v[1]),
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Distribution of "${searchTerm}" across verticals`
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Companies'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize sentiment analysis
+        function initSentimentAnalysis() {
+            // Simple sentiment dictionary
+            const posWords = new Set([
+                'innovative', 'advanced', 'novel', 'leading', 'precision', 'effective', 'efficient',
+                'revolutionary', 'specialized', 'comprehensive', 'unique', 'cutting-edge', 'state-of-the-art',
+                'integrated', 'premier', 'powerful', 'optimized', 'enhanced', 'robust', 'breakthrough',
+                'seamless', 'strategic', 'trusted', 'expert', 'excellence', 'superior', 'accelerated'
+            ]);
+            
+            const negWords = new Set([
+                'complex', 'challenging', 'difficult', 'limited', 'experimental', 'controversial',
+                'costly', 'expensive', 'rare', 'uncommon', 'investigational', 'undeveloped'
+            ]);
+            
+            // Calculate sentiment scores by vertical
+            const sentimentScores = {};
+            const verticalSamples = {};
+            
+            allVerticals.forEach(vertical => {
+                sentimentScores[vertical] = 0;
+                verticalSamples[vertical] = 0;
+            });
+            
+            filteredData.forEach(company => {
+                if (company.vertical_detail && company.vertical) {
+                    const words = company.vertical_detail.toLowerCase().split(/\W+/);
+                    let score = 0;
+                    
+                    words.forEach(word => {
+                        if (posWords.has(word)) score += 1;
+                        if (negWords.has(word)) score -= 1;
+                    });
+                    
+                    sentimentScores[company.vertical] = (sentimentScores[company.vertical] || 0) + score;
+                    verticalSamples[company.vertical] = (verticalSamples[company.vertical] || 0) + 1;
+                }
+            });
+            
+            // Calculate average scores
+            const verticals = [];
+            const scores = [];
+            
+            Object.entries(sentimentScores).forEach(([vertical, score]) => {
+                if (verticalSamples[vertical] > 0) {
+                    verticals.push(vertical);
+                    scores.push(score / verticalSamples[vertical]);
+                }
+            });
+            
+            // Sort by score
+            const sortedData = verticals.map((v, i) => ({ vertical: v, score: scores[i] }))
+                .sort((a, b) => b.score - a.score);
+            
+            // Create sentiment chart
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            if (window.sentimentChart) {
+                window.sentimentChart.destroy();
+            }
+            
+            window.sentimentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedData.map(d => d.vertical),
+                    datasets: [{
+                        label: 'Sentiment Score',
+                        data: sortedData.map(d => d.score),
+                        backgroundColor: sortedData.map(d => d.score >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+                        borderColor: sortedData.map(d => d.score >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sentiment Score (higher = more positive language)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize network analysis
+        function initNetworkAnalysis() {
+            // Extract terms for co-occurrence network
+            const terms = {};
+            const cooccurrences = {};
+            
+            // Extended stopwords
+            const stopWords = new Set([
+                'and', 'the', 'for', 'in', 'on', 'with', 'to', 'of', 'a', 'an', 'is', 'are', 'as', 'that', 'this',
+                'be', 'by', 'or', 'it', 'its', 'at', 'from', 'has', 'have', 'had', 'was', 'were', 'will', 'would',
+                'can', 'could', 'should', 'not', 'but', 'which', 'their', 'they', 'them', 'these', 'those'
+            ]);
+            
+            // Process terms from vertical details
+            filteredData.forEach(company => {
+                if (company.vertical_detail) {
+                    // Extract significant words
+                    const words = company.vertical_detail.toLowerCase()
+                        .replace(/[^\w\s-]/g, ' ')
+                        .split(/\s+/)
+                        .filter(word => word.length > 3 && !stopWords.has(word));
+                    
+                    // Record term frequencies
+                    words.forEach(word => {
+                        terms[word] = (terms[word] || 0) + 1;
+                    });
+                    
+                    // Record co-occurrences
+                    for (let i = 0; i < words.length; i++) {
+                        for (let j = i + 1; j < words.length; j++) {
+                            const term1 = words[i];
+                            const term2 = words[j];
+                            
+                            // Use a consistent key format for pairs
+                            const pair = [term1, term2].sort().join('__');
+                            
+                            if (!cooccurrences[pair]) {
+                                cooccurrences[pair] = {
+                                    source: term1,
+                                    target: term2,
+                                    value: 0
+                                };
+                            }
+                            
+                            cooccurrences[pair].value += 1;
+                        }
+                    }
+                }
+            });
+            
+            // Filter to most common terms
+            const topTerms = Object.entries(terms)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 50)
+                .map(([term]) => term);
+            
+            const topTermsSet = new Set(topTerms);
+            
+            // Create network data
+            const nodes = topTerms.map(term => ({
+                id: term,
+                group: 1, // Will be updated by community detection
+                value: terms[term]
+            }));
+            
+            const links = Object.values(cooccurrences)
+                .filter(link => topTermsSet.has(link.source) && topTermsSet.has(link.target) && link.value > 1)
+                .map(link => ({ ...link }));
+            
+            // Apply community detection (clustering)
+            if (typeof jLouvain !== 'undefined' && nodes.length > 0 && links.length > 0) {
+                try {
+                    // Prepare data for jLouvain
+                    const nodeData = {};
+                    nodes.forEach(node => {
+                        nodeData[node.id] = node;
+                    });
+                    
+                    const edgeData = links.map(link => ({
+                        source: link.source,
+                        target: link.target,
+                        weight: link.value
+                    }));
+                    
+                    // Run community detection
+                    const community = jLouvain().nodes(nodeData).edges(edgeData);
+                    const result = community();
+                    
+                    // Assign communities to nodes
+                    nodes.forEach(node => {
+                        node.group = result[node.id] || 0;
+                    });
+                    
+                    // Group terms by cluster for term clusters view
+                    const clusters = {};
+                    nodes.forEach(node => {
+                        if (!clusters[node.group]) {
+                            clusters[node.group] = [];
+                        }
+                        clusters[node.group].push({
+                            term: node.id,
+                            value: node.value
+                        });
+                    });
+                    
+                    // Sort clusters by size
+                    Object.keys(clusters).forEach(group => {
+                        clusters[group].sort((a, b) => b.value - a.value);
+                    });
+                    
+                    // Display term clusters
+                    let clusterHtml = '<div class="accordion" id="clusterAccordion">';
+                    Object.entries(clusters).forEach(([group, terms], index) => {
+                        const isOpen = index === 0 ? 'show' : '';
+                        const isExpanded = index === 0 ? 'true' : 'false';
+                        
+                        clusterHtml += `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading${group}">
+                                    <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${group}" aria-expanded="${isExpanded}" aria-controls="collapse${group}">
+                                        Cluster ${+group + 1} (${terms.length} terms)
+                                    </button>
+                                </h2>
+                                <div id="collapse${group}" class="accordion-collapse collapse ${isOpen}" aria-labelledby="heading${group}">
+                                    <div class="accordion-body">
+                                        <div class="d-flex flex-wrap gap-1">
+                        `;
+                        
+                        terms.forEach(term => {
+                            const fontSize = Math.max(10, Math.min(18, 10 + term.value / 2));
+                            clusterHtml += `<span class="badge bg-light text-dark me-1 mb-1" style="font-size: ${fontSize}px;">${term.term} (${term.value})</span>`;
+                        });
+                        
+                        clusterHtml += `
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    clusterHtml += '</div>';
+                    document.getElementById('termClusters').innerHTML = clusterHtml;
+                } catch (e) {
+                    console.error("Error in community detection:", e);
+                    document.getElementById('termClusters').innerHTML = '<div class="alert alert-danger">Error generating term clusters.</div>';
+                }
+            } else {
+                document.getElementById('termClusters').innerHTML = '<div class="alert alert-warning">Not enough data to generate term clusters.</div>';
+            }
+            
+            // Generate the force-directed graph
+            const graphData = {
+                nodes,
+                links
+            };
+            
+            // Color scale for communities
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            
+            // Clear previous graph
+            document.getElementById('networkGraph').innerHTML = '';
+            
+            // Check if we have data to display
+            if (nodes.length === 0 || links.length === 0) {
+                document.getElementById('networkGraph').innerHTML = '<div class="alert alert-warning">Not enough data to generate the network graph.</div>';
+                return;
+            }
+            
+            // Create force-directed graph
+            const Graph = ForceGraph()
+                (document.getElementById('networkGraph'))
+                .graphData(graphData)
+                .nodeId('id')
+                .nodeVal('value')
+                .nodeLabel(node => `${node.id} (mentioned ${node.value} times)`)
+                .nodeColor(node => colorScale(node.group))
+                .linkWidth(link => Math.sqrt(link.value))
+                .linkDirectionalParticles(2)
+                .linkDirectionalParticleWidth(link => Math.sqrt(link.value) * 0.5)
+                .onNodeClick(node => {
+                    // When a node is clicked, search for that term
+                    document.getElementById('termSearch').value = node.id;
+                    document.getElementById('searchTermBtn').click();
+                    
+                    // Switch to the advanced tab if not already there
+                    const advancedTab = document.getElementById('advanced-tab');
+                    const tabInstance = new bootstrap.Tab(advancedTab);
+                    tabInstance.show();
+                });
+            
+            // Generate vertical similarity map
+            initVerticalSimilarityMap();
+        }
+        
+        // Create a similarity map of verticals based on term usage
+        function initVerticalSimilarityMap() {
+            // Get verticals with enough data
+            const verticalData = [];
+            const minCompanies = 2; // Minimum companies per vertical to include
+            
+            // Count companies per vertical
+            const verticalCounts = {};
+            filteredData.forEach(company => {
+                if (company.vertical) {
+                    verticalCounts[company.vertical] = (verticalCounts[company.vertical] || 0) + 1;
+                }
+            });
+            
+            // Extract term vectors for each vertical
+            const verticalTerms = {};
+            const allTerms = new Set();
+            
+            // Process terms by vertical
+            filteredData.forEach(company => {
+                if (company.vertical_detail && company.vertical && verticalCounts[company.vertical] >= minCompanies) {
+                    if (!verticalTerms[company.vertical]) {
+                        verticalTerms[company.vertical] = {};
+                    }
+                    
+                    // Extract terms
+                    const words = company.vertical_detail.toLowerCase()
+                        .replace(/[^\w\s-]/g, ' ')
+                        .split(/\s+/)
+                        .filter(word => word.length > 3);
+                    
+                    // Record terms
+                    words.forEach(word => {
+                        allTerms.add(word);
+                        verticalTerms[company.vertical][word] = (verticalTerms[company.vertical][word] || 0) + 1;
+                    });
+                }
+            });
+            
+            // Not enough data
+            if (Object.keys(verticalTerms).length < 3) {
+                document.getElementById('verticalClusterMap').innerHTML = 
+                    '<div class="alert alert-warning">Not enough data to generate the similarity map.</div>';
+                return;
+            }
+            
+            // Convert to vectors
+            const termsList = Array.from(allTerms);
+            const verticalVectors = {};
+            
+            Object.entries(verticalTerms).forEach(([vertical, terms]) => {
+                verticalVectors[vertical] = Array(termsList.length).fill(0);
+                
+                Object.entries(terms).forEach(([term, count]) => {
+                    const index = termsList.indexOf(term);
+                    if (index !== -1) {
+                        verticalVectors[vertical][index] = count;
+                    }
+                });
+            });
+            
+            // Calculate similarities
+            const similarities = [];
+            const verticals = Object.keys(verticalVectors);
+            
+            for (let i = 0; i < verticals.length; i++) {
+                for (let j = i + 1; j < verticals.length; j++) {
+                    const vertical1 = verticals[i];
+                    const vertical2 = verticals[j];
+                    
+                    // Calculate cosine similarity
+                    const vec1 = verticalVectors[vertical1];
+                    const vec2 = verticalVectors[vertical2];
+                    
+                    let dotProduct = 0;
+                    let norm1 = 0;
+                    let norm2 = 0;
+                    
+                    for (let k = 0; k < vec1.length; k++) {
+                        dotProduct += vec1[k] * vec2[k];
+                        norm1 += vec1[k] * vec1[k];
+                        norm2 += vec2[k] * vec2[k];
+                    }
+                    
+                    norm1 = Math.sqrt(norm1);
+                    norm2 = Math.sqrt(norm2);
+                    
+                    const similarity = norm1 && norm2 ? dotProduct / (norm1 * norm2) : 0;
+                    
+                    if (similarity > 0.1) { // Minimum similarity threshold
+                        similarities.push({
+                            source: vertical1,
+                            target: vertical2,
+                            value: similarity
+                        });
+                    }
+                }
+            }
+            
+            // Create graph data
+            const nodes = verticals.map(vertical => ({
+                id: vertical,
+                group: biotechVerticals.includes(vertical) ? 1 : (academicVerticals.includes(vertical) ? 2 : 3),
+                count: verticalCounts[vertical] || 0
+            }));
+            
+            const links = similarities;
+            
+            // Color scale for groups
+            const colorScale = d3.scaleOrdinal()
+                .domain([1, 2, 3])
+                .range(['#4e79a7', '#f28e2c', '#76b7b2']);
+            
+            // Clear previous graph
+            document.getElementById('verticalClusterMap').innerHTML = '';
+            
+            // Create force-directed graph
+            const Graph = ForceGraph()
+                (document.getElementById('verticalClusterMap'))
+                .graphData({ nodes, links })
+                .nodeId('id')
+                .nodeVal('count')
+                .nodeLabel(node => `${node.id} (${node.count} companies)`)
+                .nodeColor(node => colorScale(node.group))
+                .linkWidth(link => link.value * 5)
+                .linkLabel(link => `Similarity: ${Math.round(link.value * 100)}%`)
+                .onNodeClick(node => {
+                    // Set this vertical in the comparison tool
+                    document.getElementById('compareVertical1').value = node.id;
+                    // Trigger comparison if a different vertical is already selected in the second dropdown
+                    const dropdown2 = document.getElementById('compareVertical2');
+                    if (dropdown2.value !== node.id) {
+                        document.getElementById('compareVerticalsBtn').click();
+                    }
+                })
+                .zoomToFit();
+        }
+        
+        // Update process data to include all visualizations
+        const originalProcessData = processData;
+        processData = function(data) {
+            originalProcessData(data);
+            initAdvancedAnalysis();
+            initNetworkAnalysis();
+        };
+        
         // Document ready
         document.addEventListener('DOMContentLoaded', function() {
             // Load CSV button click handler
@@ -992,6 +1949,16 @@
                 initCharts();
                 initWordClouds();
                 initInsights();
+                initAdvancedAnalysis();
+                initNetworkAnalysis();
+            });
+            
+            // Add tab switch handler to properly resize graphs
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    // Force resize for any charts that might be in the newly shown tab
+                    window.dispatchEvent(new Event('resize'));
+                });
             });
         });
     </script>
