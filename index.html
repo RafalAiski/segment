@@ -785,10 +785,17 @@
             const sortBiotechTerms = biotechTerms.sort((a, b) => b.size - a.size);
             const sortNonBiotechTerms = nonBiotechTerms.sort((a, b) => b.size - a.size);
             
-            // Create word clouds
-            createWordCloud('detailsWordcloud', sortAllTerms.slice(0, 150)); // Show more terms
-            createWordCloud('biotechWordcloud', sortBiotechTerms.slice(0, 100));
-            createWordCloud('nonBiotechWordcloud', sortNonBiotechTerms.slice(0, 100));
+            // Create word clouds with error handling
+            try {
+                createWordCloud('detailsWordcloud', sortAllTerms.slice(0, 150)); // Show more terms
+                createWordCloud('biotechWordcloud', sortBiotechTerms.slice(0, 100));
+                createWordCloud('nonBiotechWordcloud', sortNonBiotechTerms.slice(0, 100));
+            } catch (e) {
+                console.error("Error creating word clouds:", e);
+                document.getElementById('detailsWordcloud').innerHTML = '<div class="alert alert-danger">Error creating word cloud. Please try with a different browser.</div>';
+                document.getElementById('biotechWordcloud').innerHTML = '<div class="alert alert-danger">Error creating word cloud. Please try with a different browser.</div>';
+                document.getElementById('nonBiotechWordcloud').innerHTML = '<div class="alert alert-danger">Error creating word cloud. Please try with a different browser.</div>';
+            }
         }
 
         // Helper function to create a word cloud
@@ -1177,8 +1184,14 @@
             
             // Create chart
             const lengthCtx = document.getElementById('detailLengthChart').getContext('2d');
-            if (window.detailLengthChart) {
-                window.detailLengthChart.destroy();
+            
+            try {
+                // Safely destroy existing chart if it exists
+                if (window.detailLengthChart instanceof Chart) {
+                    window.detailLengthChart.destroy();
+                }
+            } catch (e) {
+                console.error("Error destroying length chart:", e);
             }
             
             window.detailLengthChart = new Chart(lengthCtx, {
@@ -1418,8 +1431,13 @@
             // Create/update chart
             const ctx = document.getElementById('termDistributionChart').getContext('2d');
             
-            if (window.termDistributionChart) {
-                window.termDistributionChart.destroy();
+            try {
+                // Safely destroy existing chart if it exists
+                if (window.termDistributionChart instanceof Chart) {
+                    window.termDistributionChart.destroy();
+                }
+            } catch (e) {
+                console.error("Error destroying term distribution chart:", e);
             }
             
             window.termDistributionChart = new Chart(ctx, {
@@ -1514,8 +1532,13 @@
             // Create sentiment chart
             const ctx = document.getElementById('sentimentChart').getContext('2d');
             
-            if (window.sentimentChart) {
-                window.sentimentChart.destroy();
+            try {
+                // Safely destroy existing chart if it exists
+                if (window.sentimentChart instanceof Chart) {
+                    window.sentimentChart.destroy();
+                }
+            } catch (e) {
+                console.error("Error destroying sentiment chart:", e);
             }
             
             window.sentimentChart = new Chart(ctx, {
@@ -1715,9 +1738,16 @@
                 return;
             }
             
+            // Check if ForceGraph is available
+            if (typeof ForceGraph !== 'function') {
+                document.getElementById('networkGraph').innerHTML = '<div class="alert alert-warning">ForceGraph library could not be loaded. Network visualization is not available.</div>';
+                return;
+            }
+            
             // Create force-directed graph
-            const Graph = ForceGraph()
-                (document.getElementById('networkGraph'))
+            try {
+                const Graph = ForceGraph()
+                    (document.getElementById('networkGraph'))
                 .graphData(graphData)
                 .nodeId('id')
                 .nodeVal('value')
@@ -1736,9 +1766,18 @@
                     const tabInstance = new bootstrap.Tab(advancedTab);
                     tabInstance.show();
                 });
+            } catch (e) {
+                console.error("Error creating force graph:", e);
+                document.getElementById('networkGraph').innerHTML = '<div class="alert alert-danger">Error creating network graph. Please try loading the dashboard in a different browser.</div>';
+            }
             
             // Generate vertical similarity map
-            initVerticalSimilarityMap();
+            try {
+                initVerticalSimilarityMap();
+            } catch (e) {
+                console.error("Error creating vertical similarity map:", e);
+                document.getElementById('verticalClusterMap').innerHTML = '<div class="alert alert-danger">Error creating vertical similarity map. Please try loading the dashboard in a different browser.</div>';
+            }
         }
         
         // Create a similarity map of verticals based on term usage
@@ -1857,6 +1896,12 @@
             // Clear previous graph
             document.getElementById('verticalClusterMap').innerHTML = '';
             
+            // Check if ForceGraph is available
+            if (typeof ForceGraph !== 'function') {
+                document.getElementById('verticalClusterMap').innerHTML = '<div class="alert alert-warning">ForceGraph library could not be loaded. Visualization is not available.</div>';
+                return;
+            }
+            
             // Create force-directed graph
             const Graph = ForceGraph()
                 (document.getElementById('verticalClusterMap'))
@@ -1882,9 +1927,23 @@
         // Update process data to include all visualizations
         const originalProcessData = processData;
         processData = function(data) {
+            // First process the basic data displays
             originalProcessData(data);
-            initAdvancedAnalysis();
-            initNetworkAnalysis();
+            
+            // Use setTimeout to ensure all DOM elements are ready before initializing advanced visualizations
+            setTimeout(() => {
+                try {
+                    initAdvancedAnalysis();
+                } catch (e) {
+                    console.error("Error initializing advanced analysis:", e);
+                }
+                
+                try {
+                    initNetworkAnalysis();
+                } catch (e) {
+                    console.error("Error initializing network analysis:", e);
+                }
+            }, 100);
         };
         
         // Document ready
@@ -1953,11 +2012,39 @@
                 initNetworkAnalysis();
             });
             
-            // Add tab switch handler to properly resize graphs
+            // Add tab switch handler to properly resize graphs and initialize charts if needed
             document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
                 tab.addEventListener('shown.bs.tab', function(event) {
                     // Force resize for any charts that might be in the newly shown tab
                     window.dispatchEvent(new Event('resize'));
+                    
+                    // If showing advanced or network tabs, re-initialize the charts
+                    const targetTab = event.target.getAttribute('id');
+                    if (targetTab === 'advanced-tab' && filteredData.length > 0) {
+                        setTimeout(() => {
+                            try {
+                                initAdvancedAnalysis();
+                            } catch (e) {
+                                console.error("Error re-initializing advanced analysis:", e);
+                            }
+                        }, 50);
+                    } else if (targetTab === 'network-tab' && filteredData.length > 0) {
+                        setTimeout(() => {
+                            try {
+                                initNetworkAnalysis();
+                            } catch (e) {
+                                console.error("Error re-initializing network analysis:", e);
+                            }
+                        }, 50);
+                    } else if (targetTab === 'wordcloud-tab' && filteredData.length > 0) {
+                        setTimeout(() => {
+                            try {
+                                initWordClouds();
+                            } catch (e) {
+                                console.error("Error re-initializing word clouds:", e);
+                            }
+                        }, 50);
+                    }
                 });
             });
         });
